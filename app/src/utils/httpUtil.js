@@ -1,4 +1,5 @@
 import axios from 'axios';
+import urlConstants from '../constants/urlConstants';
 
 export function get(url, params = {}, headers = {}) {
   let request = {
@@ -50,3 +51,27 @@ export function remove(url, headers = {}) {
   
   return axios(request);
 }
+
+axios.interceptors.response.use(response => {
+  return response;
+}, (error) => {
+  let originalRequest = error.config;
+
+  if(error.response.status === 401) {
+    const refreshToken = localStorage.getItem('refreshToken');
+    let tokenRequest = {
+      method: 'get',
+      url: urlConstants.baseUrl + '/refresh',
+      headers: {
+        Authorization: 'Bearer ' + refreshToken
+      }
+    };
+
+    return axios(tokenRequest).then(({data}) => {
+      localStorage.setItem('accessToken', data.accessToken);
+      originalRequest.headers.Authorization = 'Bearer ' + data.accessToken;
+      return axios(originalRequest);
+    });
+  }
+  return Promise.reject(error);  
+}); 
