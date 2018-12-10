@@ -14,7 +14,7 @@ services:
       - db:/app/dist/db
       - logs:/app/logs
     ports:
-      - "127.0.0.1:{{API_PORT}}:8848"
+      - "127.0.0.1:{{API_PORT}}:8000"
     environment:
       - "VAULT_TOKEN=${BULLETIN_DEV_VAULT_TOKEN}"      
 
