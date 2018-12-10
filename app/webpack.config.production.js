@@ -5,10 +5,18 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
-// Initialize environment variables
-dotenv.config();
-
 const baseHref = process.env.BASE_HREF;
+
+const env = dotenv.config().parsed;
+  
+// reduce it to a nice object, the same as before
+const envKeys = Object.keys(env).reduce((prev, next) => {
+  prev[`process.env.${next}`] = JSON.stringify(env[next]);
+  return prev;
+}, {
+  'process.env.NODE_ENV': JSON.stringify('production'),
+  'process.env.BASE_HREF': JSON.stringify(process.env.BASE_HREF)
+});
 
 module.exports = {
   entry: './index.js', // the entry point of our app
@@ -53,10 +61,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: resolve(__dirname, 'public/index.html')
     }),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('production'),
-      'process.env.BASE_HREF': JSON.stringify(process.env.BASE_HREF)
-    }),
+    new webpack.DefinePlugin(envKeys),
     new webpack.optimize.UglifyJsPlugin()
   ]
 };

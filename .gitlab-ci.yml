@@ -53,7 +53,7 @@ app-build:
     - cd app
     - mv dev.env.example .env
     - npm install
-    - npm run build
+    - npm run build:production
 
   only:
     - test
