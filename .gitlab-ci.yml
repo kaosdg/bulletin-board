@@ -2,20 +2,20 @@
 stages:
 
 # list of environment for CI
+  # - deploy 
   - build
-  - test
   - package
-  
-# list of stages for CD
-  - testing
-  - development
-  - release
-  - production
+  - deploy
 
 # list of tasks
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+  - api/node_modules/ 
+  - app/node_modules/ 
 
 api-build:
-  image: 'node:8.12.0-alpine'
+  image: 'node:8.14.0-alpine'
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     paths:
@@ -37,73 +37,40 @@ api-build:
     - test
     - node-react
     - master
-    # - /^BB-.*$/
 
-
-app-build:
-  image: 'node:8.12.0-alpine'
-  artifacts:
-    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    paths:
-    - app/dist/
-    # - app/node_modules/
-    expire_in: 1 week
-  stage: build
-  tags:
-    - docker
-  script:
-    - echo "Building artifact"
-    - cd app
-    - mv .env.example .env
-    - npm install
-    - npm run build
+# app-build:
+#   image: 'node:8.14.0-alpine'
+#   artifacts:
+#     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+#     paths:
+#     - app/dist/    
+#     expire_in: 1 week
+#   stage: build
+#   tags:
+#     - docker
+#   script:
+#     - echo "Building artifact"
+#     - cd app
+#     - npm install
+#     - npm run build
 
   only:
     - test
     - node-react
     - master
-    # - /^BB-.*$/
-
-
-# api-unit-test:
-#   stage: test
-#   tags:
-#     - docker
-#   script:
-#     - echo "Unit test of api"
-#   dependencies:
-#     - api-build
-#   only:
-#     - test
-#     - node-react
-#     - master
-#     # - /^BB-.*$/
-
-
-
-# app-unit-test:
-#   stage: test
-#   tags:
-#     - docker
-#   script:
-#     - echo "Unit test app"
-#   dependencies:
-#     - app-build
-#   only:
-#     - test
-#     - node-react
-#     - master
-#     # - /^BB-.*$/
-
 
 pakage-app:
   stage: package
+  services:
+    - docker:dind
+  image: docker:latest
   tags:
-    - shell
-  script:
-    - echo "packing app"
-    - ls -al
-    
+    - docker
+  script:    
+    - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD" $REGISTRY_URL
+    - docker build --pull -t $REGISTRY_URL/bulletin-app:latest -f ./devops/App.Dockerfile .
+    - docker push $REGISTRY_URL/bulletin-app:latest
+
   dependencies:
     - app-build
   only:
@@ -111,14 +78,17 @@ pakage-app:
     - node-react
     - master
 
-
 pakage-api:
   stage: package
+  services:
+    - docker:dind
+  image: docker:latest
   tags:
-    - shell
+    - docker
   script:
-    - echo "packing api"
-    - ls -al
+    - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD" $REGISTRY_URL
+    - docker build --pull -t $REGISTRY_URL/bulletin-api:latest -f ./devops/Api.Dockerfile .
+    - docker push $REGISTRY_URL/bulletin-api:latest
     
   dependencies:
     - api-build
@@ -126,68 +96,34 @@ pakage-api:
     - test
     - node-react
     - master
-    
-deploy-to-test:
-  stage: testing
-  tags:
-    - docker
-  script:
-    - echo "Deploying to Test environment"
-  only:
-    - test
-  
 
 deploy-to-dev:
-  stage: development
+  stage: deploy
+  image: pravashupreti/fabric-deploy
   tags:
     - docker
   script:
     - echo "Deploying to Developer environment"
-    - cd devops    
+    - cd devops
+    # Prepare
+    - export TAG=latest
+    - export APP_PORT=5502
+    - export API_PORT=5503
     - fab makeWorkdir
-    - fab compileConfig
-    - fab stopServer
-    - fab uploadConfig
     - fab updateImage
+    - fab compileConfig    
+    
+    # deploy
+    - fab stopServer    
+    - fab uploadConfig    
     - fab deploy
-
-  only:
-    - node-react
-
-deploy-to-qa:
-  stage: development
-  tags:
-    - docker
-  script:
-    - echo "Deploying to QA environment"
-  
-  only:
-    - node-react
     
 
-deploy-to-uat:
-  stage: development
-  tags:
-    - docker
-  script:
-    - echo "Deploying to UAT environment"
-  
   only:
     - node-react
-    
-
-deploy-to-release:
-  stage: release
-  tags:
-    - docker
-  script:
-    - echo "Deploying to Staging environment"
-  only:
-    - master
-
 
 deploy-to-production:
-  stage: production
+  stage: deploy
   tags:
     - docker
   script:
