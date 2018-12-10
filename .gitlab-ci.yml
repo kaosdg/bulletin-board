@@ -143,6 +143,14 @@ deploy-to-dev:
     - docker
   script:
     - echo "Deploying to Developer environment"
+    - cd devops    
+    - fab makeWorkdir
+    - fab compileConfig
+    - fab stopServer
+    - fab uploadConfig
+    - fab updateImage
+    - fab deploy
+
   only:
     - node-react
 

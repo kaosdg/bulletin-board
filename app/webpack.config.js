@@ -18,8 +18,6 @@ const envKeys = Object.keys(env).reduce((prev, next) => {
   'process.env.NODE_ENV': JSON.stringify('production')
 });
 
-console.log(envKeys)
-
 module.exports = {
   target: 'web',
   entry: [
