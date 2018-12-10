@@ -1,9 +1,7 @@
 const urlConstants = {
-  baseUrl: 'http://localhost:8000',
-  apiBaseUrl: 'http://localhost:8000/api',
-  googleLoginUrl: 'http://localhost:8000/api/auth/google'
+  baseUrl: process.env.BASE_HREF,
+  apiBaseUrl: process.env.REACT_APP_BASE_URL,
+  googleLoginUrl: process.env.GOOGLE_LOGIN_URL
 };
-
-console.log(process.env.BASE_HREF)
 
 export default urlConstants;
