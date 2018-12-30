@@ -3,7 +3,7 @@ import { Redirect } from 'react-router-dom';
 import GoogleLogin from 'react-google-login';
 
 import textConstants from '../../constants/textConstants';
-import routeConstants from '../../constants/routeConstants';
+import * as routes from '../../constants/routes'	
 import * as bulletinService from '../../services/bulletinService';
 import bulletinLogo from '../../assets/images/bulletin-board-login-image.png';
 
@@ -18,16 +18,14 @@ class GoogleLoginComponent extends Component {
   }
 
   responseGoogle(response){
+	  console.log(response)
     let profileObj = response.profileObj;
     let data = {
       tokenId: response.tokenId
     };
-    debugger;
-    
     bulletinService.validateAdmin(data)
       .then(res => {
         const {tokens} = res.data.data;
-        debugger;
         localStorage.setItem('accessToken', tokens.accessToken);
         localStorage.setItem('refreshToken', tokens.refreshToken);
         localStorage.setItem('user', JSON.stringify(profileObj));
@@ -59,7 +57,7 @@ class GoogleLoginComponent extends Component {
           ) :(
             <Redirect
               to={{
-                pathname: routeConstants.DASHBOARD
+                pathname: routes.DASHBOARD
               }}
             />
           )

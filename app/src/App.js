@@ -1,8 +1,6 @@
 import React from 'react';
 
-import Router from './routes';
-
-import './App.css';
+import Router from './components/Router';
 
 const App = () => <Router />;
 
